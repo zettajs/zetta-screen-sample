@@ -17,8 +17,7 @@
   #define XP 57   // can be a digital pin, this is A3 
 #endif 
 
-#define BUFFER_MAX 17
-#define SCREEN_LENGTH 16
+#define BUFFER_MAX 18
 #define MAX_LINE_COUNT 11
 #define NEWLINE 0xa
 
@@ -33,6 +32,9 @@
 #define MINPRESSURE 900
 #define MAXPRESSURE 1000
 #define PUSHMAX 5
+#define PUSH_DELAY 2000
+#define FONT_SIZE 2
+#define LINE_HEIGHT 20
 
 int incomingByte = 0;
 char buffer[BUFFER_MAX+1];
@@ -64,7 +66,7 @@ void setup() {
 void loop() {
   TSPoint p = ts.getPoint();
 
-  if (p.z > MINPRESSURE && p.z < MAXPRESSURE && millis() < startPush + 2000) {
+  if (p.z > MINPRESSURE && p.z < MAXPRESSURE && millis() < startPush + PUSH_DELAY) {
     pushCount = pushCount + 1;
 
     if (pushCount == PUSHMAX) {
@@ -75,7 +77,7 @@ void loop() {
     }
   }
 
-  if (pushCount > 0 && millis() >= startPush + 2000) {
+  if (pushCount > 0 && millis() >= startPush + PUSH_DELAY) {
     pushCount = 0;
   }
 
@@ -100,11 +102,11 @@ void loop() {
         if (blank == true) {
           x = X_START;
         } else {
-          x = x - 20;
+          x = x - LINE_HEIGHT;
         }
       }
 
-      Tft.drawString(buffer, x, y, 2, WHITE);
+      Tft.drawString(buffer, x, y, FONT_SIZE, WHITE);
       lineCount = lineCount + 1;
       blank = false;
 
@@ -134,7 +136,7 @@ void resetBuffer() {
 }
 
 void sendWelcome() {
-  Tft.drawString("> zettajs.io", x, y, 2, WHITE);
+  Tft.drawString("> zettajs.io", x, y, FONT_SIZE, WHITE);
   lineCount = lineCount + 1;
   blank = false;
 }
