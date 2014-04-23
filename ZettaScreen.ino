@@ -1,8 +1,5 @@
 #include <stdint.h>
 #include <SPI.h>
-//#include <Bridge.h>
-//#include <WiFi.h>
-#include "PubSubClient.h"
 #include "TouchScreen.h"
 #include "TFT.h"
 
@@ -20,13 +17,6 @@
   #define XP 57   // can be a digital pin, this is A3 
 #endif 
 
-char ssid[] = "Loft21";
-char pass[] = "silkylotus997";
-
-//int status = WL_IDLE_STATUS;
-
-//WiFiClient client;
-
 #define BUFFER_MAX 17
 #define SCREEN_LENGTH 16
 #define MAX_LINE_COUNT 11
@@ -35,6 +25,15 @@ char pass[] = "silkylotus997";
 #define X_START 220
 #define Y_START 10
 
+#define YP A1  // must be an analog pin, use "An" notation!
+#define XM A2  // must be an analog pin, use "An" notation!
+#define YM 7   // can be a digital pin
+#define XP 6   // can be a digital pin
+
+#define MINPRESSURE 900
+#define MAXPRESSURE 1000
+#define PUSHMAX 5
+
 int incomingByte = 0;
 char buffer[BUFFER_MAX+1];
 int index = 0;
@@ -42,42 +41,48 @@ int charCount = 0;
 int x = X_START;
 int y = Y_START;
 int lineCount = 0;
+int pushCount = 0;
+boolean blank = false;
+unsigned long startPush;
+
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
 void setup() {
   while(!Serial) {
   }
 
-  //Bridge.begin();
   Tft.init();
   Tft.setDisplayDirect(UP2DOWN);
-  Tft.drawString("> Science, bitch!", x, y, 2, WHITE);
-  lineCount = lineCount + 1;
+  sendWelcome();
+  startPush = millis();
 
   Serial.begin(9600);
   
-  /*if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println("WiFi shield not present.");
-    while(true);
-  }*/
-  
-  Serial.println("Starting...");
-  Serial.println();
-
   resetBuffer();
-  
-  /*while (status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(ssid);
-    
-    status = WiFi.begin(ssid, pass);
-    
-    delay(10000);
-  }
-  
-  printWifiStatus();*/
 }
 
 void loop() {
+  TSPoint p = ts.getPoint();
+
+  if (p.z > MINPRESSURE && p.z < MAXPRESSURE && millis() < startPush + 2000) {
+    pushCount = pushCount + 1;
+
+    if (pushCount == PUSHMAX) {
+      pushCount = 0;
+      resetBuffer();
+      resetScreen();
+      sendWelcome();
+    }
+  }
+
+  if (pushCount > 0 && millis() >= startPush + 2000) {
+    pushCount = 0;
+  }
+
+  if (pushCount == 0) {
+    startPush = millis();
+  }
+
   if (Serial.available() > 0) {
     incomingByte = Serial.read();
 
@@ -92,16 +97,19 @@ void loop() {
       if (lineCount == MAX_LINE_COUNT) {
         resetScreen();
       } else {
-        x = x - 20;
+        if (blank == true) {
+          x = X_START;
+        } else {
+          x = x - 20;
+        }
       }
 
-      Serial.print("I received: ");
-      Serial.println(buffer);
-
       Tft.drawString(buffer, x, y, 2, WHITE);
+      lineCount = lineCount + 1;
+      blank = false;
+
       memset(buffer, 0, sizeof(buffer));
 
-      lineCount = lineCount + 1;
 
       if (incomingByte == NEWLINE) {
         resetBuffer();
@@ -116,6 +124,7 @@ void resetScreen() {
   x = X_START;
   Tft.paintScreenBlack();
   lineCount = 0;
+  blank = true;
 }
 
 void resetBuffer() {
@@ -124,20 +133,7 @@ void resetBuffer() {
   index = 2;
 }
 
-/*
-void printWifiStatus() {
-  // print the SSID of the network you're attached to:
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  // print your WiFi shield's IP address:
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
-
-  // print the received signal strength:
-  long rssi = WiFi.RSSI();
-  Serial.print("signal strength (RSSI):");
-  Serial.print(rssi);
-  Serial.println(" dBm");
-}*/
+void sendWelcome() {
+  Tft.drawString("> zettajs.io", x, y, 2, WHITE);
+  lineCount = lineCount + 1;
+}
