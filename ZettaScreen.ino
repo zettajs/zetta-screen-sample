@@ -136,4 +136,5 @@ void resetBuffer() {
 void sendWelcome() {
   Tft.drawString("> zettajs.io", x, y, 2, WHITE);
   lineCount = lineCount + 1;
+  blank = false;
 }
