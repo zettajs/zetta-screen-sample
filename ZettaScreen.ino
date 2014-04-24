@@ -106,9 +106,7 @@ void loop() {
         }
       }
 
-      Tft.drawString(buffer, x, y, FONT_SIZE, WHITE);
-      lineCount = lineCount + 1;
-      blank = false;
+      drawString(buffer);
 
       memset(buffer, 0, sizeof(buffer));
 
@@ -136,7 +134,11 @@ void resetBuffer() {
 }
 
 void sendWelcome() {
-  Tft.drawString("> zettajs.io", x, y, FONT_SIZE, WHITE);
+  drawString("> zettajs.io");
+}
+
+void drawString(char *buf) {
+  Tft.drawString(buf, x, y, FONT_SIZE, WHITE);
   lineCount = lineCount + 1;
   blank = false;
 }
