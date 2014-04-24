@@ -53,45 +53,24 @@ void setup() {
   while(!Serial) {
   }
 
+  Serial.begin(9600);
+
   Tft.init();
   Tft.setDisplayDirect(UP2DOWN);
   sendWelcome();
+  insertPrompt();
   startPush = millis();
-
-  Serial.begin(9600);
-  
-  resetBuffer();
 }
 
 void loop() {
-  TSPoint p = ts.getPoint();
-
-  if (p.z > MINPRESSURE && p.z < MAXPRESSURE && millis() < startPush + PUSH_DELAY) {
-    pushCount = pushCount + 1;
-
-    if (pushCount == PUSHMAX) {
-      pushCount = 0;
-      resetBuffer();
-      resetScreen();
-      sendWelcome();
-    }
-  }
-
-  if (pushCount > 0 && millis() >= startPush + PUSH_DELAY) {
-    pushCount = 0;
-  }
-
-  if (pushCount == 0) {
-    startPush = millis();
-  }
+  checkForScreenReset();
 
   if (Serial.available() > 0) {
     incomingByte = Serial.read();
 
     if (incomingByte == NEWLINE) {
-      drawString(buffer);
-      clearBuffer();
-      resetBuffer();
+      drawString();
+      insertPrompt();
       return;
     }
 
@@ -99,8 +78,7 @@ void loop() {
     index = index + 1;
 
     if (index == BUFFER_MAX) {
-      drawString(buffer);
-      clearBuffer();
+      drawString();
       index = 0;
     }
   }
@@ -113,7 +91,7 @@ void resetScreen() {
   blank = true;
 }
 
-void resetBuffer() {
+void insertPrompt() {
   buffer[0] = '>';
   buffer[1] = ' ';
   index = 2;
@@ -124,10 +102,13 @@ void clearBuffer() {
 }
 
 void sendWelcome() {
-  drawString("> zettajs.io");
+  clearBuffer();
+  char welcome[] = "> zettajs.io";
+  strncpy(buffer, welcome, sizeof(welcome));
+  drawString();
 }
 
-void drawString(char *buf) {
+void drawString() {
   if (lineCount == MAX_LINE_COUNT) {
     resetScreen();
   } else {
@@ -138,7 +119,31 @@ void drawString(char *buf) {
     }
   }
 
-  Tft.drawString(buf, x, y, FONT_SIZE, WHITE);
+  Tft.drawString(buffer, x, y, FONT_SIZE, WHITE);
+  clearBuffer();
+
   lineCount = lineCount + 1;
   blank = false;
+}
+
+void checkForScreenReset() {
+  TSPoint p = ts.getPoint();
+
+  if (p.z > MINPRESSURE && p.z < MAXPRESSURE && millis() < startPush + PUSH_DELAY) {
+    pushCount = pushCount + 1;
+
+    if (pushCount == PUSHMAX) {
+      pushCount = 0;
+      resetScreen();
+      sendWelcome();
+    }
+  }
+
+  if (pushCount > 0 && millis() >= startPush + PUSH_DELAY) {
+    pushCount = 0;
+  }
+
+  if (pushCount == 0) {
+    startPush = millis();
+  }
 }
