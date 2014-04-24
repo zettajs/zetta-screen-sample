@@ -88,40 +88,20 @@ void loop() {
   if (Serial.available() > 0) {
     incomingByte = Serial.read();
 
-    /*if (incomingByte == NEWLINE) {
+    if (incomingByte == NEWLINE) {
       drawString(buffer);
       clearBuffer();
       resetBuffer();
       return;
     }
 
-    index = index + 1;
     buffer[index] = incomingByte;
+    index = index + 1;
 
     if (index == BUFFER_MAX) {
       drawString(buffer);
       clearBuffer();
       index = 0;
-    }*/
-
-    if (incomingByte != NEWLINE) {
-      buffer[index] = incomingByte;
-    }
-
-    index = index + 1;
-
-    if (index == BUFFER_MAX || incomingByte == NEWLINE) {
-
-      drawString(buffer);
-
-      memset(buffer, 0, sizeof(buffer));
-
-
-      if (incomingByte == NEWLINE) {
-        resetBuffer();
-      } else {
-        index = 0;
-      }
     }
   }
 }
