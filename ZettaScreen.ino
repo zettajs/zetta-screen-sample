@@ -44,7 +44,7 @@ int x = X_START;
 int y = Y_START;
 int lineCount = 0;
 int pushCount = 0;
-boolean blank = false;
+boolean blank = true;
 unsigned long startPush;
 
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
@@ -88,6 +88,22 @@ void loop() {
   if (Serial.available() > 0) {
     incomingByte = Serial.read();
 
+    /*if (incomingByte == NEWLINE) {
+      drawString(buffer);
+      clearBuffer();
+      resetBuffer();
+      return;
+    }
+
+    index = index + 1;
+    buffer[index] = incomingByte;
+
+    if (index == BUFFER_MAX) {
+      drawString(buffer);
+      clearBuffer();
+      index = 0;
+    }*/
+
     if (incomingByte != NEWLINE) {
       buffer[index] = incomingByte;
     }
@@ -95,16 +111,6 @@ void loop() {
     index = index + 1;
 
     if (index == BUFFER_MAX || incomingByte == NEWLINE) {
-
-      if (lineCount == MAX_LINE_COUNT) {
-        resetScreen();
-      } else {
-        if (blank == true) {
-          x = X_START;
-        } else {
-          x = x - LINE_HEIGHT;
-        }
-      }
 
       drawString(buffer);
 
@@ -133,11 +139,25 @@ void resetBuffer() {
   index = 2;
 }
 
+void clearBuffer() {
+  memset(buffer, 0, sizeof(buffer));
+}
+
 void sendWelcome() {
   drawString("> zettajs.io");
 }
 
 void drawString(char *buf) {
+  if (lineCount == MAX_LINE_COUNT) {
+    resetScreen();
+  } else {
+    if (blank == true) {
+      x = X_START;
+    } else {
+      x = x - LINE_HEIGHT;
+    }
+  }
+
   Tft.drawString(buf, x, y, FONT_SIZE, WHITE);
   lineCount = lineCount + 1;
   blank = false;
