@@ -57,8 +57,10 @@ void setup() {
 
   Tft.init();
   Tft.setDisplayDirect(UP2DOWN);
+
   sendWelcome();
   insertPrompt();
+
   startPush = millis();
 }
 
