@@ -1,5 +1,6 @@
 var readline = require('readline');
-var SerialPort = require('serialport').SerialPort;
+var serialport = require('serialport');
+var SerialPort = serialport.SerialPort;
 
 var rl = readline.createInterface({
   input: process.stdin,
@@ -7,7 +8,10 @@ var rl = readline.createInterface({
 });
 
 
-var serialPort = new SerialPort('/dev/tty.usbmodem1411', { baudRate: 9600 });
+var serialPort = new SerialPort('/dev/tty.usbmodem1411', {
+  baudRate: 9600,
+  parser: serialport.parsers.readline('\r')
+});
 
 var ask = function() {
   rl.question('> ', function(answer) {
@@ -18,7 +22,9 @@ var ask = function() {
 };
 
 serialPort.on('open', function() {
-  setTimeout(function() {
-    ask();
-  }, 5000);
+  serialPort.on('data', function(data) {
+    if (data === 'ready') {
+      ask();
+    }
+  })
 });

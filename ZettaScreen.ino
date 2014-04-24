@@ -62,6 +62,8 @@ void setup() {
   insertPrompt();
 
   startPush = millis();
+
+  Serial.println("ready");
 }
 
 void loop() {
