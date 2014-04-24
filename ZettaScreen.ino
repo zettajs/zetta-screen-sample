@@ -104,7 +104,7 @@ void clearBuffer() {
 void sendWelcome() {
   clearBuffer();
   char welcome[] = "> zettajs.io";
-  strncpy(buffer, welcome, sizeof(welcome));
+  memcpy(buffer, welcome, sizeof(welcome));
   drawString();
 }
 
